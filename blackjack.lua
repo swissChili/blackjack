@@ -85,6 +85,8 @@ Site = {
   content = "content",
   -- Output directory
   output = "site",
+  -- Static file directory
+  static = "static",
   -- File processor objects
   processors = {
     html = HtmlProcessor,
@@ -137,4 +139,7 @@ function Site:build()
       os.exit(1)
     end
   end
+
+  print("  Copying: " .. self.static)
+  io.popen('cp -r "' .. self.static .. '" "' .. self.output .. '/static/"')
 end
