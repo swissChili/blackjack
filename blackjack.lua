@@ -1,10 +1,7 @@
 -- blackjack.lua
 -- Copyright (c) 2020 swissChili <swisschili.sh> all rights reserved.
 
--- Class that processes HTML files
-HtmlProcessor = {}
-
-function HtmlProcessor:process(site, template, parameters)
+function htmlProcessor(site, template, parameters)
   local parent = ""
   -- #{ key = value }
   template = template:gsub("#{%s*([%w._]+)%s*=%s*([%w._]+)%s*}",
@@ -32,9 +29,7 @@ function HtmlProcessor:process(site, template, parameters)
   return template
 end
 
-LmlProcessor = {}
-
-function LmlProcessor:process(site, template, parameters)
+function lmlProcessor(site, template, parameters)
   local parent = ""
   -- @ must be at start of a line, so adding \n makes it work at
   -- the start of a file.
@@ -78,6 +73,36 @@ function LmlProcessor:process(site, template, parameters)
   return template
 end
 
+CommandProcessor = {
+  command = "",
+  parent = nil,
+}
+
+function CommandProcessor:new(command)
+  cmdp = {}
+  setmetatable(cmdp, self)
+  self.__index = self
+  cmdp.command = command
+  return cmdp
+end
+
+function cmdProcessor(command)
+  return function (site, template, parameters)
+    local p = io.popen(command .. ' > /tmp/blackjack-stdout.html', 'w')
+    p:write(template)
+    p:close()
+    local output = io.open("/tmp/blackjack-stdout.html", "r")
+    if output ~= nil then
+      local out = output:read("all")
+      output:close()
+      return out
+    else
+      print("    Error: Could not read from temporary file.")
+      os.exit(1)
+    end
+  end
+end
+
 Site = {
   -- Template source directory
   templates = "templates",
@@ -86,11 +111,11 @@ Site = {
   -- Output directory
   output = "site",
   -- Static file directory
-  static = "static",
+  static = nil,
   -- File processor objects
   processors = {
-    html = HtmlProcessor,
-    lml = LmlProcessor
+    html = htmlProcessor,
+    lml = lmlProcessor
   }
 }
 
@@ -105,7 +130,7 @@ function Site:render(fp, body)
     local text = f:read("all")
     f:close()
     local extension = fp:match(".(%w+)$")
-    return self.processors[extension]:process(self, text, body)
+    return self.processors[extension](self, text, body)
   else
     print("    Error: Tried to open template that does not exist")
     print(fp)
@@ -140,6 +165,8 @@ function Site:build()
     end
   end
 
-  print("  Copying: " .. self.static)
-  io.popen('cp -r "' .. self.static .. '" "' .. self.output .. '/static/"')
+  if self.static ~= nil then
+    print("  Copying: " .. self.static)
+    io.popen('cp -r "' .. self.static .. '" "' .. self.output .. '/static/"')
+  end
 end
