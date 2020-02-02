@@ -30,6 +30,13 @@ function htmlProcessor(site, template, parameters)
 end
 
 function mdProcessor(site, temp, parameters)
+  local toReplace = {
+    { "`", "code" },
+    { "%*%*", "b" },
+    { "%*", "i" },
+    { "~~", "s" }
+  }
+
   local parent = ""
   -- @ must be at start of a line, so adding \n makes it work at
   -- the start of a file.
@@ -41,31 +48,32 @@ function mdProcessor(site, temp, parameters)
         parent = v
       else
         parameters[k] = v
+        print(k .. ' = ' .. v)
       end
 
       return ''
     end
   )
 
-  template = template:gsub("(#+)([^=.^\n]+)\n", function (depth, header)
-    return "<h" .. #depth .. ">" .. header .. "</h" .. #depth .. ">"
-  end)
-
-  template = template:gsub("%*%*(.-)%*%*", function (bold)
-    return "<b>" .. bold .. "</b>"
-  end)
-
-  template = template:gsub("%*(.-)%*", function (it)
-    return "<i>" .. it .. "</i>"
-  end)
-
   template = template:gsub("%${%s*([%w_%.]+)%s*}", function (word)
     return parameters[word]
+  end)
+
+  template = template:gsub("(#+)([^=.^\n]+)\n", function (depth, header)
+    return "<h" .. #depth .. ">" .. header .. "</h" .. #depth .. ">"
   end)
 
   template = template:gsub("```\n+(.-)\n+```", function (code)
     return "<pre><code class>" .. code .. '</code></pre>'
   end)
+
+  for i = 1, #toReplace do
+    local k = toReplace[i][1]
+    local v = toReplace[i][2]
+    template = template:gsub(k .. "(.-)" .. k, function (body)
+      return "<" .. v .. ">" .. body .. "</" .. v .. ">"
+    end)
+  end
 
   template = template:match( "^%s*(.-)%s*$"):gsub("\n\n+", "\n<br>\n")
 
@@ -144,7 +152,12 @@ function Site:render(fp, body)
     local text = f:read("all")
     f:close()
     local extension = getExtension(fp)
-    return self.processors[extension].process(self, text, body)
+    if self.processors[extension] ~= nil then
+      return self.processors[extension].process(self, text, body)
+    else
+      print("    Error: There is no processor for ." .. extension .. " files")
+      os.exit(1)
+    end
   else
     print("    Error: Tried to open template that does not exist")
     print(fp)
