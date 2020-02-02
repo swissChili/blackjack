@@ -29,11 +29,11 @@ function htmlProcessor(site, template, parameters)
   return template
 end
 
-function lmlProcessor(site, template, parameters)
+function mdProcessor(site, temp, parameters)
   local parent = ""
   -- @ must be at start of a line, so adding \n makes it work at
   -- the start of a file.
-  template = '\n' .. template
+  local template = '\n' .. temp
   -- @key = value
   template = template:gsub("\n%s*@([%w%._]+)%s*=%s*([%w%._]+)",
     function (k, v)
@@ -61,6 +61,10 @@ function lmlProcessor(site, template, parameters)
 
   template = template:gsub("%${%s*([%w_%.]+)%s*}", function (word)
     return parameters[word]
+  end)
+
+  template = template:gsub("```\n+(.-)\n+```", function (code)
+    return "<pre><code class>" .. code .. '</code></pre>'
   end)
 
   template = template:match( "^%s*(.-)%s*$"):gsub("\n\n+", "\n<br>\n")
@@ -114,10 +118,20 @@ Site = {
   static = nil,
   -- File processor objects
   processors = {
-    html = htmlProcessor,
-    lml = lmlProcessor
+    html = {
+      process = htmlProcessor,
+      extension = 'html'
+    },
+    md = {
+      process = mdProcessor,
+      extension = 'html'
+    }
   }
 }
+
+local function getExtension(file)
+  return file:match(".(%w+)$")
+end
 
 function Site:renderTemplate(templateFile, body)
   local fp = self.templates .. '/' .. templateFile
@@ -129,8 +143,8 @@ function Site:render(fp, body)
   if f ~= nil then
     local text = f:read("all")
     f:close()
-    local extension = fp:match(".(%w+)$")
-    return self.processors[extension](self, text, body)
+    local extension = getExtension(fp)
+    return self.processors[extension].process(self, text, body)
   else
     print("    Error: Tried to open template that does not exist")
     print(fp)
@@ -152,7 +166,7 @@ function Site:build()
     print(" Building: ".. file)
     local html = self:render(file, {})
     local outFile = self.output .. '/' .. getFileName(
-      replaceExtension(file, 'html')
+      replaceExtension(file, self.processors[getExtension(file)].extension)
     )
     print("  Writing: " .. outFile)
     local file = io.open(outFile, "w")

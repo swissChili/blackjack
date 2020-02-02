@@ -2,3 +2,4 @@ site
 templates
 content
 static
+!docs
