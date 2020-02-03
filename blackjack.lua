@@ -169,8 +169,8 @@ local function replaceExtension(file, ext)
   return file:gsub(".%w+$", '.' .. ext)
 end
 
-local function getFileName(file)
-  return file:match("/([^/]+)$")
+local function getFileName(site, file)
+  return file:sub(#site.content + 1)
 end
 
 function Site:build()
@@ -178,7 +178,8 @@ function Site:build()
   for file in p:lines() do
     print(" Building: ".. file)
     local html = self:render(file, {})
-    local outFile = self.output .. '/' .. getFileName(
+    local outFile = self.output .. getFileName(
+      self,
       replaceExtension(file, self.processors[getExtension(file)].extension)
     )
     print("  Writing: " .. outFile)
