@@ -134,7 +134,9 @@ Site = {
       process = mdProcessor,
       extension = 'html'
     }
-  }
+  },
+  -- Global config data
+  global = {}
 }
 
 local function getExtension(file)
@@ -177,7 +179,7 @@ function Site:build()
   local p = io.popen('find "'.. self.content ..'" -type f')
   for file in p:lines() do
     print(" Building: ".. file)
-    local html = self:render(file, {})
+    local html = self:render(file, self.global)
     local outFile = self.output .. getFileName(
       self,
       replaceExtension(file, self.processors[getExtension(file)].extension)
