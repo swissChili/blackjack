@@ -1,10 +1,56 @@
 -- blackjack.lua
 -- Copyright (c) 2020 swissChili <swisschili.sh> all rights reserved.
 
+local colors = {
+  -- Stolen from ansicolors.lua
+  -- reset
+  reset =      0,
+
+  -- misc
+  bright     = 1,
+  dim        = 2,
+  underline  = 4,
+  blink      = 5,
+  reverse    = 7,
+  hidden     = 8,
+
+  -- foreground colors
+  black     = 30,
+  red       = 31,
+  green     = 32,
+  yellow    = 33,
+  blue      = 34,
+  magenta   = 35,
+  cyan      = 36,
+  white     = 37,
+
+  -- background colors
+  blackbg   = 40,
+  redbg     = 41,
+  greenbg   = 42,
+  yellowbg  = 43,
+  bluebg    = 44,
+  magentabg = 45,
+  cyanbg    = 46,
+  whitebg   = 47,
+
+  c = function (c)
+    return (string.char(27) .. '[%dm'):format(c)
+  end
+}
+
+local function err(message)
+  print(colors.c(colors.red) .. message .. colors.c(colors.reset))
+end
+
+local function warn(message)
+  print(colors.c(colors.yellow) .. message .. colors.c(colors.reset))
+end
+
 function htmlProcessor(site, template, parameters)
   local parent = ""
   -- #{ key = value }
-  template = template:gsub("#{%s*([%w._]+)%s*=%s*([%w._]+)%s*}",
+  template = template:gsub("#{%s*([%w._]+)%s*=%s*(.-)}",
     function(k, v)
       if (k == "parent")
       then
@@ -109,7 +155,7 @@ function cmdProcessor(command)
       output:close()
       return out
     else
-      print("    Error: Could not read from temporary file.")
+      err("    Error: Could not read from temporary file.")
       os.exit(1)
     end
   end
@@ -162,7 +208,7 @@ function Site:render(fp, body)
       return text
     end
   else
-    print("    Error: Tried to open template that does not exist")
+    err("    Error: Tried to open template that does not exist")
     print(fp)
     os.exit(1)
   end
@@ -186,7 +232,8 @@ function Site:build()
     if self.processors[ext] then
       newext = replaceExtension(file, self.processors[ext].extension)
     else
-      newext = ext
+      warn("  Warning: no processor defined for " .. ext)
+      newext = file
     end
     local outFile = self.output .. getFileName(
       self,
@@ -197,7 +244,7 @@ function Site:build()
     if file ~= nil then
       file:write(html)
     else
-      print("    Error: Could not write file. Does "
+      err("    Error: Could not write file. Does "
         .. self.output .. " directory exist?")
       os.exit(1)
     end
