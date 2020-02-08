@@ -157,8 +157,9 @@ function Site:render(fp, body)
     if self.processors[extension] ~= nil then
       return self.processors[extension].process(self, text, body)
     else
-      print("    Error: There is no processor for ." .. extension .. " files")
-      os.exit(1)
+      -- print("    Error: There is no processor for ." .. extension .. " files")
+      -- os.exit(1)
+      return text
     end
   else
     print("    Error: Tried to open template that does not exist")
