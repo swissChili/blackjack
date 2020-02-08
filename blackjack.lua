@@ -181,9 +181,16 @@ function Site:build()
   for file in p:lines() do
     print(" Building: ".. file)
     local html = self:render(file, self.global)
+    local ext = getExtension(file)
+    local newext
+    if self.processors[ext] then
+      newext = replaceExtension(file, self.processors[ext].extension)
+    else
+      newext = ext
+    end
     local outFile = self.output .. getFileName(
       self,
-      replaceExtension(file, self.processors[getExtension(file)].extension)
+      newext
     )
     print("  Writing: " .. outFile)
     local file = io.open(outFile, "w")
