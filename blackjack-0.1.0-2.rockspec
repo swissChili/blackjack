@@ -1,5 +1,5 @@
 package = "blackjack"
-version = "0.1.0-1"
+version = "0.1.0-2"
 source = {
    url = "git://github.com/swissChili/blackjack"
 }

@@ -22,8 +22,8 @@ Jekyll.
 
 ### Installation
 
-First install Lua. You will need blackjack.lua to be in your lua path in order for your
-configuration files to work. At some point I will deploy this to LuaRocks.
+Install Lua and LuaRocks from your distribution's package manager or from lua's website.
+Then install blackjack with `sudo luarocks install blackjack`
 
 ### Configuration
 

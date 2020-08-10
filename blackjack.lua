@@ -105,7 +105,7 @@ function mdProcessor(site, temp, parameters)
     return parameters[word]
   end)
 
-  template = template:gsub("(#+)([^=.^\n]+)\n", function (depth, header)
+  template = template:gsub("\n(#+)([^=.^\n]+)\n", function (depth, header)
     return "<h" .. #depth .. ">" .. header .. "</h" .. #depth .. ">"
   end)
 
